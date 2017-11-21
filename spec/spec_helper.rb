@@ -1,6 +1,5 @@
 require "rspec"
 
-require 'celluloid'
 require 'sidekiq'
 require 'sidekiq/processor'
 require 'sidekiq/manager'
@@ -48,9 +47,15 @@ def start_server(server_middleware_options={})
   pid = Process.fork do
     $stdout.reopen File::NULL, 'w'
     $stderr.reopen File::NULL, 'w'
+
+    fn = "/tmp/#{SecureRandom.hex}.rb"
+    File.open(fn, "w") do
+    end
+
     require 'sidekiq/cli'
+
+    Sidekiq.options[:require] = fn
     Sidekiq.options[:queues] << 'default'
-    Sidekiq.options[:require] =  File.expand_path('../support/test_jobs.rb', __FILE__)
     Sidekiq.configure_server do |config|
       config.redis = Sidekiq::RedisConnection.create
       config.server_middleware do |chain|
